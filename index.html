@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Para Bia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Lora:ital,wght@0,400;1,400;1,500&family=Cormorant+Garamond:ital,wght@1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
+  <audio id="bg-music" loop preload="auto">
+    <source src="videoplayback.m4a" type="audio/mp4">
+  </audio>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0C0C0C;
+      --fg:      #F0EBE1;
+      --muted:   #8A8070;
+      --gold:    #B89A6A;
+      --gold2:   #D4B896;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Lora', serif;
+      overflow-x: hidden;
+    }
+
+    /* MUSIC BUTTON */
+    #music-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 100;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid rgba(180,154,106,0.4);
+      background: rgba(12,12,12,0.85);
+      backdrop-filter: blur(8px);
+      color: var(--gold);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.3s, opacity 0.3s;
+    }
+    #music-btn:hover { border-color: var(--gold); }
+    #music-btn.playing .icon-play { display:none; }
+    #music-btn:not(.playing) .icon-pause { display:none; }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      height: 100vh;
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .hero-img {
+      position: absolute;
+      inset: 0;
+      background-image: url('WhatsApp_Image_2026-06-12_at_17_01_46.jpeg');
+      background-size: cover;
+      background-position: center 30%;
+      filter: brightness(0.35) saturate(0.6);
+      transform: scale(1.05);
+      transition: transform 8s ease;
+    }
+    .hero-img.loaded { transform: scale(1); }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(12,12,12,0.2) 50%,
+        rgba(12,12,12,1) 100%
+      );
+    }
+
+    .hero-content {
+      position: relative;
+      text-align: center;
+      padding: 0 24px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1.2s ease 0.5s, transform 1.2s ease 0.5s;
+    }
+    .hero-content.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 300;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+
+    .hero-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(4rem, 14vw, 10rem);
+      font-weight: 400;
+      font-style: italic;
+      line-height: 0.95;
+      color: var(--fg);
+      letter-spacing: -0.02em;
+    }
+
+    .hero-name em {
+      color: var(--gold2);
+      font-style: italic;
+    }
+
+    .hero-sub {
+      margin-top: 28px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      animation: fadeIn 1s ease 2.5s forwards;
+    }
+    .scroll-hint span {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--muted), transparent);
+      animation: scrollPulse 2s ease-in-out 2.5s infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* LETTER BODY */
+    .letter {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 80px 32px 120px;
+    }
+
+    .salutation {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.5rem;
+      color: var(--gold2);
+      margin-bottom: 48px;
+    }
+
+    .paragraph {
+      font-size: 1.05rem;
+      line-height: 1.95;
+      color: #C8BFB2;
+      margin-bottom: 36px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .paragraph.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .quote-block {
+      margin: 8px 0 36px;
+      padding: 28px 32px;
+      border-left: 2px solid var(--gold);
+      font-style: italic;
+      font-size: 0.98rem;
+      line-height: 2;
+      color: #9E9080;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.8s ease 0.1s, transform 0.8s ease 0.1s;
+    }
+    .quote-block.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .nicknames {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: var(--gold2);
+      letter-spacing: 0.02em;
+    }
+
+    .strong-line {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.08rem;
+      color: var(--fg);
+    }
+
+    /* PHOTO BREAKS */
+    .photo-section {
+      width: 100%;
+      margin: 64px 0;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+    .photo-section.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .photo-full {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      filter: saturate(0.75) brightness(0.9);
+    }
+
+    .photo-full.portrait {
+      aspect-ratio: 3/4;
+      max-height: 70vh;
+      width: 100%;
+      object-fit: cover;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .photo-grid img {
+      width: 100%;
+      aspect-ratio: 4/5;
+      object-fit: cover;
+      filter: saturate(0.75) brightness(0.9);
+      display: block;
+    }
+
+    .photo-caption {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 12px;
+      text-align: right;
+      padding-right: 4px;
+    }
+
+    /* CLOSING */
+    .closing {
+      margin-top: 72px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .closing.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .closing-big {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      font-style: italic;
+      line-height: 1.7;
+      color: var(--fg);
+      margin-bottom: 64px;
+    }
+
+    .sig-block {
+      text-align: right;
+    }
+
+    .sig-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 400;
+      color: var(--fg);
+      letter-spacing: -0.01em;
+    }
+
+    .sig-role {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* FINAL PHOTO */
+    .finale-photo {
+      width: 100%;
+      height: 70vh;
+      object-fit: cover;
+      object-position: center 20%;
+      filter: saturate(0.6) brightness(0.7);
+      display: block;
+    }
+
+    .finale-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .finale-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(12,12,12,0.5) 0%, transparent 30%, rgba(12,12,12,0.8) 100%);
+    }
+
+    /* DIVIDER */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 64px 0;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    .divider.visible { opacity: 1; }
+    .divider-line { flex: 1; height: 1px; background: rgba(180,154,106,0.15); }
+    .divider-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); opacity: 0.6; }
+
+    /* MOBILE */
+    @media (max-width: 560px) {
+      .letter { padding: 60px 20px 80px; }
+      .photo-full { aspect-ratio: 4/5; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO -->
+  <button id="music-btn" aria-label="Música">
+    <span class="icon-play">♪</span>
+    <span class="icon-pause">⏸</span>
+  </button>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-img" id="hero-img"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content" id="hero-content">
+      <p class="hero-eyebrow">Uma carta para</p>
+      <h1 class="hero-name">B<em>i</em>a</h1>
+      <p class="hero-sub">do Lucas, com amor</p>
+    </div>
+    <div class="scroll-hint">
+      <span>continuar</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- FIRST PHOTO -->
+  <div class="photo-section" data-reveal>
+    <img class="photo-full" src="WhatsApp_Image_2026-06-12_at_17_01_46__1_.jpeg" alt="Nós dois">
+    <p class="photo-caption">Antes e agora</p>
+  </div>
+
+  <!-- LETTER -->
+  <div class="letter">
+
+    <p class="salutation">Meu amor,</p>
+
+    <p class="paragraph" data-reveal>
+      Nesse dia dos namorados fiquei pensando muito em como te surpreender ou fazer algo novo e na minha
+      cabeca sempre bateu forte uma reflexao sobre a nova evolucao que vivemos como casal. Vi um post que
+      resumiu tudo que estamos vivendo:
+    </p>
+
+    <blockquote class="quote-block" data-reveal>
+      "Percebi que tiramos menos fotos e escrevo menos declaracoes, exceto em viagens e as vezes em
+      celebracoes. Mas durante o namoro eu poderia escrever cartas diarias de amor, e todos os momentos
+      pareciam dignos de serem registrados. Hoje, casados, as formas de expressar amor se multiplicaram
+      muito. No cafe da manha, nas conversas dificeis e nos dias cansativos, estamos mais ocupados e
+      distraidos com a missao de amar, mas hoje quero lembrar que todas as fases do amor sao dignas de
+      serem celebradas e registradas, e que voce e minha eterna namorada."
+    </blockquote>
+
+  </div>
+
+  <!-- PHOTO GRID -->
+  <div class="photo-section" data-reveal>
+    <div class="photo-grid">
+      <img src="WhatsApp_Image_2026-06-12_at_17_01_45__2_.jpeg" alt="">
+      <img src="WhatsApp_Image_2026-06-12_at_17_01_46__2_.jpeg" alt="">
+    </div>
+    <p class="photo-caption">Lucas & Beatriz</p>
+  </div>
+
+  <div class="letter">
+
+    <p class="paragraph" data-reveal>
+      Voce sempre sera minha <span class="nicknames">Bi, Bibia, malaguetinha, chucrute azedo do Alasca</span>
+      (nao sei ate hoje de onde tirei isso) e sempre sera minha
+      <span class="strong-line">Bia, meu amor, minha esposa, mae da nossa filha do ceu e do Mogli, e minha mulher.</span>
+    </p>
+
+  </div>
+
+  <!-- SINGLE PORTRAIT -->
+  <div class="photo-section" data-reveal>
+    <img class="photo-full portrait" src="WhatsApp_Image_2026-06-12_at_17_01_45.jpeg" alt="">
+    <p class="photo-caption">Sempre juntos</p>
+  </div>
+
+  <div class="letter">
+
+    <p class="paragraph" data-reveal>
+      Nosso amor hoje se faz em lembrar dia apos dia de cuidar um do outro ao se levantar e ao dormir,
+      ao cobrar e cuidar da saude um do outro e no falar "acho melhor voce deixar isso um pouco de lado
+      e vir aqui ficar comigo."
+    </p>
+
+    <div class="divider" data-reveal>
+      <div class="divider-line"></div>
+      <div class="divider-dot"></div>
+      <div class="divider-line"></div>
+    </div>
+
+    <p class="paragraph" data-reveal>
+      Nosso amor se faz no dia a dia e na rotina, rotina que e intensa mas nao nos engole pois
+      <span class="strong-line">escolhemos</span> muda-la. Escolhemos nao viver todo dia no automatico,
+      escolhemos parar, respirar e olhar para o outro, escolhemos amar, escolhemos perdoar,
+      escolhemos entender e aceitar o outro como ele e, escolhemos assistir series duvidosas,
+      fazer pipocas fedidas, brincar de lutinha e fazer cócegas no outro.
+    </p>
+
+    <div class="divider" data-reveal>
+      <div class="divider-line"></div>
+      <div class="divider-dot"></div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="closing" data-reveal>
+      <p class="closing-big">
+        Minha maior decisao de amor sempre vai ser te escolher, dia apos dia, ano apos ano,
+        como a promessa que te fiz no altar perante a Deus.
+      </p>
+
+      <div class="sig-block">
+        <div class="sig-name">Lucas Piemontez</div>
+        <p class="sig-role">Seu marido, para sempre</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FINAL PHOTO -->
+  <div class="finale-wrap">
+    <img class="finale-photo" src="beatriz_casamento2185-2.jpg" alt="Nosso casamento">
+  </div>
+
+  <script>
+    // Hero reveal
+    window.addEventListener('load', () => {
+      const img = document.getElementById('hero-img');
+      const content = document.getElementById('hero-content');
+      setTimeout(() => {
+        img.classList.add('loaded');
+        content.classList.add('visible');
+      }, 100);
+    });
+
+    // Scroll reveal
+    const revealEls = document.querySelectorAll('[data-reveal], .paragraph, .quote-block, .divider, .closing');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    revealEls.forEach(el => observer.observe(el));
+
+    // Music fade in/out
+    const audio = document.getElementById('bg-music');
+    const btn = document.getElementById('music-btn');
+    audio.volume = 0;
+
+    // Auto-attempt play on first interaction
+    let started = false;
+    function tryStart() {
+      if (started) return;
+      started = true;
+      audio.play().then(() => {
+        btn.classList.add('playing');
+        let v = 0;
+        const fadeIn = setInterval(() => {
+          v = Math.min(v + 0.02, 0.5);
+          audio.volume = v;
+          if (v >= 0.5) clearInterval(fadeIn);
+        }, 80);
+      }).catch(() => { started = false; });
+    }
+
+    document.addEventListener('click', tryStart, { once: true });
+    document.addEventListener('scroll', tryStart, { once: true });
+    document.addEventListener('touchstart', tryStart, { once: true });
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (audio.paused) {
+        audio.play();
+        btn.classList.add('playing');
+        started = true;
+        let v = audio.volume;
+        const fi = setInterval(() => {
+          v = Math.min(v + 0.02, 0.5);
+          audio.volume = v;
+          if (v >= 0.5) clearInterval(fi);
+        }, 80);
+      } else {
+        let v = audio.volume;
+        const fo = setInterval(() => {
+          v = Math.max(v - 0.02, 0);
+          audio.volume = v;
+          if (v <= 0) { clearInterval(fo); audio.pause(); btn.classList.remove('playing'); }
+        }, 80);
+      }
+    });
+  </script>
+</body>
+</html>
